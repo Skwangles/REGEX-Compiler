@@ -18,8 +18,6 @@ public class REcompile {
     char[] regexpattern;
     public static void main(String[] args) {
         String regex = args[0];//Reads in the regex pattern into an easily parse-able set.
-       // output = new State[regex.length]; //Creates array of the max space the regex could be (100% concat) and has the state-number, symbol/branchindicator & next 2 states
-        //" are removed automatically
         REcompile compile = new REcompile();
         compile.parse(regex);
     }
@@ -28,13 +26,20 @@ public class REcompile {
         regexpattern = regex.toCharArray();
         addState('\0', 1,1);//Starting value
         expression();
-        addState('\0',0,0);//Finishing state
+        addState('\0',0,0);//Finishing state pointing back to start
+
+        for (int i = 0; i < symbol.size(); i++){
+            System.out.println(i + " " + (symbol.get(i) == '\0' ? "~" : symbol.get(i)) + " " + next1.get(i) + " " + next2.get(i));
+        }
     }
 
 
    public int expression()
     {
         int ret = term();
+
+        if(nextChar >= regexpattern.length || ret == -1) return -1;//Return if finished
+
         if(isVocab(regexpattern[nextChar]) ||regexpattern[nextChar]=='(') expression();//Concatenate the following expression
         return ret;//Returns the pointer to the start of this particular branch
     }
@@ -46,8 +51,12 @@ public class REcompile {
 
         int heldState, savedNextState1,savedNextState2,prevState;//Prevents global versions being overwritten - Excess C notation
 
+        if(nextChar >= regexpattern.length) return -1;//Return if finished
+
         prevState=currstate-1;//updates the prev state for this local
         savedNextState1 = factor();//Gets the next factor and returns the variable pointing to the start of the term
+
+        if(nextChar >= regexpattern.length || savedNextState1 == -1) return -1;//Return if finished
 
         if(regexpattern[nextChar]=='*'){
             addBranchState(currstate+1,savedNextState1);//Add branch state, pointing to the term, and to the item past it (t1 already is pointing to this branch)
@@ -89,7 +98,6 @@ public class REcompile {
    public int factor()//Consumes a literal - i.e. it can be assumed on return the nextchar is either an operator or an expression to concatenate
     {
         int heldState = currstate;
-
         if(isVocab(regexpattern[nextChar])){
             heldState = currstate;
             addState(regexpattern[nextChar],currstate+1,currstate+1);
