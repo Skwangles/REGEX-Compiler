@@ -59,16 +59,14 @@ public class REcompile {
         if(nextChar >= regexpattern.length || savedNextState1 == -1) return -1;//Return if finished
 
         if(regexpattern[nextChar]=='*'){
+            pointStateToCurrent(prevState);//point previous to the new branch state
             addBranchState(currstate+1,savedNextState1);//Add branch state, pointing to the term, and to the item past it (t1 already is pointing to this branch)
             nextChar++;
-            pointStateToCurrent(prevState);//point previous to the new branch state
-            currstate++;//Advance the state counter - as a branchstate has been created
         }
         else if(regexpattern[nextChar]=='?'){
+            pointStateToCurrent(prevState);//point previous to the new branch state
             addBranchState(currstate+1,savedNextState1);//Add branch state, pointing to the term, and to the item past it
             nextChar++;
-            pointStateToCurrent(prevState);//point previous to the new branch state
-            currstate++;
             pointStateToCurrent(savedNextState1);//Makes the 0 or 1'd literal point to the current (next open) state
         }
         else if(regexpattern[nextChar]=='+'){//a+ is equal to aa* - first create new literal then apply * to the new literal
@@ -90,7 +88,8 @@ public class REcompile {
             //Get the location of the next term's state -
             savedNextState2 = term();
             updateState(heldState,'\0',savedNextState1,savedNextState2);//Create branching state at the location of the 'heldState' pointing to the two different items
-            pointStateToCurrent(prevState);//point
+            pointStateToCurrent(prevState);
+            savedNextState1 = heldState;//The held state refers to the START of the |, which replaces the 'savedNextState1 as the start
         }
         return savedNextState1;//Returns the factor location for the | state - used in nothing else
     }
