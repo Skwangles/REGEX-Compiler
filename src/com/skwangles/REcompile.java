@@ -1,6 +1,7 @@
 package com.skwangles;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 //Alexander Stokes - 1578409 & Rowan Thorley -
 //Alexander Developed this
@@ -8,8 +9,7 @@ import java.util.ArrayList;
 //--Factor is a literal, term is something that could be part of a whole i.e. (a+b) could be a part of (a+b)/2
 //State or FSM means a labelled item in a FSM table that has 1. a state, 2. two next states - n1, n2 - points to the next index in the whole model
 public class REcompile {
-    char escape = '\0';
-  // static State[] output;
+    // static State[] output;
     int currstate = 0;//State number starts at 0,
     int nextChar = 0;
     ArrayList<Character> symbol = new ArrayList<>();
@@ -112,14 +112,12 @@ public class REcompile {
     public boolean isVocab(char s){//Checks if the variable is a literal within the scope of the project - i.e. acceptable ascii
         if(s == '\\'){
             nextChar++;//Program will work with next value as literal
-            if((int)s >= 33 && (int) s <= 126) {//Checks that the char is within the ascii of ! until ~
-                return true;
-            }
+            //Checks that the char is within the ascii of ! until ~
+            return true;
         }
         else if((int)s >= 33 && (int) s <= 126){//Checks that the char is within the ascii of ! until ~
-            if (!"*()[]?+.".contains("" + s)) {//is it an operator
-                return true;
-            }
+            //is it an operator
+            return !"*()[]?+.".contains("" + s);
         }
         return false;//Either is outside the ascii bounds OR is an unescaped special character
     }
@@ -129,7 +127,7 @@ public class REcompile {
     //
 
     public void pointStateToCurrent(int stateIndex){//repoint the input FSM to the current state, but does it differently based on the type of state
-        if(next1.get(stateIndex) == next2.get(stateIndex))
+        if(Objects.equals(next1.get(stateIndex), next2.get(stateIndex)))
             next2.set(stateIndex, currstate);//If previous is Literal point both to next
         next1.set(stateIndex, currstate);//if previous is branching state - point 1 'next' to the currentstate
     }
