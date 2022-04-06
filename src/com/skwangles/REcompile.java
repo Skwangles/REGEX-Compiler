@@ -12,9 +12,7 @@ public class REcompile {
     // static State[] output;
     int currstate = 0;//State number starts at 0,
     int nextChar = 0;
-    ArrayList<Character> symbol = new ArrayList<>();
-    ArrayList<Integer> next1 = new ArrayList<>();
-    ArrayList<Integer> next2 = new ArrayList<>();
+    ArrayList<State> FSMlist = new ArrayList<>();
     char[] regexpattern;
     public static void main(String[] args) {
         String regex = args[0];//Reads in the regex pattern into an easily parse-able set.
@@ -28,13 +26,14 @@ public class REcompile {
         expression();
         addState('\0',0,0);//Finishing state pointing back to start
 
-        for (int i = 0; i < symbol.size(); i++){
-            System.out.println(i + " " + (symbol.get(i) == '\0' ? "~" : symbol.get(i)) + " " + next1.get(i) + " " + next2.get(i));
+        for (int i = 0; i < FSMlist.size(); i++){
+            State state = FSMlist.get(i);
+            System.out.println(i + " " + (state.symbol == '\0' ? "~" : state.symbol) + " " + state.n1 + " " + state.n2);
         }
     }
 
 
-   public int expression()
+    public int expression()
     {
         int ret = term();
 
@@ -70,13 +69,11 @@ public class REcompile {
             pointStateToCurrent(savedNextState1);//Makes the 0 or 1'd literal point to the current (next open) state
         }
         else if(regexpattern[nextChar]=='+'){//a+ is equal to aa* - first create new literal then apply * to the new literal
-            addState(symbol.get(savedNextState1), currstate +1, currstate +1 );//Creates identical literal as savedNextState
+            addState(FSMlist.get(savedNextState1).symbol, currstate +1, currstate +1 );//Creates identical literal as savedNextState
             prevState = savedNextState1;
-            currstate++;
+            pointStateToCurrent(prevState);//point previous to the new branch state
             addBranchState(currstate+1,currstate-1);//Add branch state, pointing to the term, and to the item past it (t1 already is pointing to this branch)
             nextChar++;
-            pointStateToCurrent(prevState);//point previous to the new branch state
-            currstate++;//Advance the state counter - as a branchstate has been created
         }
         else if(regexpattern[nextChar] == '|'){
             pointStateToCurrent(prevState);
@@ -94,7 +91,7 @@ public class REcompile {
         return savedNextState1;//Returns the factor location for the | state - used in nothing else
     }
 
-   public int factor()//Consumes a literal - i.e. it can be assumed on return the nextchar is either an operator or an expression to concatenate
+    public int factor()//Consumes a literal - i.e. it can be assumed on return the nextchar is either an operator or an expression to concatenate
     {
         int heldState = currstate;
         if(isVocab(regexpattern[nextChar])){
@@ -134,29 +131,26 @@ public class REcompile {
     //
 
     public void pointStateToCurrent(int stateIndex){//repoint the input FSM to the current state, but does it differently based on the type of state
-        if(Objects.equals(next1.get(stateIndex), next2.get(stateIndex)))
-            next2.set(stateIndex, currstate);//If previous is Literal point both to next
-        next1.set(stateIndex, currstate);//if previous is branching state - point 1 'next' to the currentstate
+        if(Objects.equals(FSMlist.get(stateIndex).n1, FSMlist.get(stateIndex).n2)) {
+            FSMlist.get(stateIndex).n2 = currstate;
+        }
+
+        FSMlist.get(stateIndex).n1 = currstate;
     }
 
     public void addState(char sym, int n1, int n2){
-        symbol.add(sym);
-        next1.add(n1);
-        next2.add(n2);
+
+        FSMlist.add(new State(sym, n1,n2));
         currstate++;
     }
 
     public void addBranchState(int n1, int n2){
-        symbol.add('\0');
-        next1.add(n1);
-        next2.add(n2);
+        FSMlist.add(new State('\0', n1,n2));
         currstate++;
     }
 
     public void updateState(int state, char sym, int n1, int n2){
-        symbol.set(state, sym);
-        next1.set(state, n1);
-        next2.set(state, n2);
+        FSMlist.set(state, new State(sym, n1, n2));
     }
 
 
@@ -175,11 +169,11 @@ public class REcompile {
 
 //State class holds all of the individual info of the States in a FSM
 class State {
-    String symbol = null;
-    int n1 = -1;
-    int n2 = -1;
+    char symbol;
+    int n1;
+    int n2;
     //Used to hold the State values as they are parsed for the compiler, can also be used by the search
-    public State(String symbol, int n1, int n2) {
+    public State(char symbol, int n1, int n2) {
         this.symbol = symbol;
         this.n1 = n1;
         this.n2 = n2;
