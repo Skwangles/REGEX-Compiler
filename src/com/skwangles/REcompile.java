@@ -48,29 +48,26 @@ public class REcompile {
         //nextChar++ is used to 'consume' the operator
         //currstate++ is used to progress forward in the States table
 
-        int heldState, savedNextState1,savedNextState2,prevState;//Prevents global versions being overwritten - Excess C notation
+        if(nextChar >= regexpattern.length) return -1;//Return -1 if finished
+        int prevState=currstate-1;
+        int startOfTermNumber = factor();
 
-        if(nextChar >= regexpattern.length) return -1;//Return if finished
-
-        prevState=currstate-1;//updates the prev state for this local
-        savedNextState1 = factor();//Gets the next factor and returns the variable pointing to the start of the term
-
-        if(nextChar >= regexpattern.length || savedNextState1 == -1) return -1;//Return if finished
+        if(nextChar >= regexpattern.length || startOfTermNumber == -1) return -1;
 
         if(regexpattern[nextChar]=='*'){
-            pointStateToCurrent(prevState);//point previous to the new branch state
-            addBranchState(currstate+1,savedNextState1);//Add branch state, pointing to the term, and to the item past it (t1 already is pointing to this branch)
+            pointStateToCurrent(prevState);//repoint to branch state
+            addBranchState(currstate+1,startOfTermNumber);//Add branch state, pointing to the term, and to the item past it (t1 already is pointing to this branch)
             nextChar++;
         }
         else if(regexpattern[nextChar]=='?'){
             pointStateToCurrent(prevState);//point previous to the new branch state
-            addBranchState(currstate+1,savedNextState1);//Add branch state, pointing to the term, and to the item past it
+            addBranchState(currstate+1,startOfTermNumber);//Add branch state, pointing to the term, and to the item past it
             nextChar++;
-            pointStateToCurrent(savedNextState1);//Makes the 0 or 1'd literal point to the current (next open) state
+            pointStateToCurrent(startOfTermNumber);//Makes the 0 or 1'd literal point to the current (next open) state
         }
         else if(regexpattern[nextChar]=='+'){//a+ is equal to aa* - first create new literal then apply * to the new literal
-            addState(FSMlist.get(savedNextState1).symbol, currstate +1, currstate +1 );//Creates identical literal as savedNextState
-            prevState = savedNextState1;
+            addState(FSMlist.get(startOfTermNumber).symbol, currstate +1, currstate +1 );//Creates identical literal as savedNextState
+            prevState = startOfTermNumber;
             pointStateToCurrent(prevState);//point previous to the new branch state
             addBranchState(currstate+1,currstate-1);//Add branch state, pointing to the term, and to the item past it (t1 already is pointing to this branch)
             nextChar++;
@@ -79,38 +76,47 @@ public class REcompile {
             pointStateToCurrent(prevState);
             prevState=currstate-1;//Update the previous state
             nextChar++;//Consume the | character
-            heldState=currstate;//Save the current state for after Term is run
+            int heldState=currstate;//Save the current state for after Term is run
             addBranchState(0,0);//place holder branch
 
-            //Get the location of the next term's state -
-            savedNextState2 = term();
-            updateState(heldState,'\0',savedNextState1,savedNextState2);//Create branching state at the location of the 'heldState' pointing to the two different items
+            int secondTermInDisjunction = term();//Get the location of the next term's state
+            updateState(heldState,'\0',startOfTermNumber,secondTermInDisjunction);//Create branching state at the location of the 'heldState' pointing to the two different items
             pointStateToCurrent(prevState);
-            savedNextState1 = heldState;//The held state refers to the START of the |, which replaces the 'savedNextState1 as the start
+            startOfTermNumber = heldState;//branching state of the OR is the new start of this term
         }
-        return savedNextState1;//Returns the factor location for the | state - used in nothing else
+        return startOfTermNumber;//Returns the factor location for the | state - used in nothing else
     }
 
     public int factor()//Consumes a literal - i.e. it can be assumed on return the nextchar is either an operator or an expression to concatenate
     {
-        int heldState = currstate;
+        int startOfFactor = currstate;
         if(isVocab(regexpattern[nextChar])){
-            heldState = currstate;
+            startOfFactor = currstate;
             addState(regexpattern[nextChar],currstate+1,currstate+1);
             nextChar++;//Consume a factor
         }
         else if(regexpattern[nextChar]=='('){
             nextChar++;//Consume bracket
-            heldState = expression();//Process the internals of the ()
+            startOfFactor = expression();//Process the internals of the ()
             if(regexpattern[nextChar]==')')//If the very next char is NOT a close bracket, then the parsing fails
                 nextChar++;//Consume the ')'
             else
                 error();
         }
+        else if(regexpattern[nextChar] == '['){
+            nextChar++;
+            //parse disjunction here - first make sure that concant and | occur in the right oder
+            if(regexpattern[nextChar] == ']'){
+                nextChar++;
+            }
+            else
+                error();//Unmatched brackets
+        }
         else
             error();
-        return heldState;
+        return startOfFactor;
     }
+
 
 
     public boolean isVocab(char s){//Checks if the variable is a literal within the scope of the project - i.e. acceptable ascii
@@ -121,7 +127,10 @@ public class REcompile {
         }
         else if((int)s >= 33 && (int) s <= 126){//Checks that the char is within the ascii of ! until ~
             //is it an operator
-            return !"*()[]?+.".contains("" + s);
+            return !"*()[]?+".contains("" + s);//All special chars, '.' is not included, as it is a wildcard
+        }
+        else{
+            error();//Was an unusable char
         }
         return false;//Either is outside the ascii bounds OR is an unescaped special character
     }
