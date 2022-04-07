@@ -51,8 +51,8 @@ public class REcompile {
             updateState(branchheldState,'\0',heldState,secondTermInDisjunction);//Create branching state at the location of the 'heldState' pointing to the two different items
             heldState = branchheldState;
         }
-        if(expressionConcat() != -1){
-            pointStateToCurrent(prevState);
+        if(expressionConcat() != -1){//Processes the items AFTER the
+            pointStateToCurrent(prevState);//Finds the end of the concat series so that the char before the | will point to the 'exit' of the expression.
         }
         return heldState;//Returns the pointer to the start of this particular expression
     }
