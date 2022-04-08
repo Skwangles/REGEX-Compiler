@@ -21,6 +21,9 @@ public class REcompile {
     }
 
     public void parse(String regex){
+        System.out.println(regex);
+        regex = changeSquareToSlash(regex);
+        System.out.println(regex);
         regexpattern = regex.toCharArray();
         addState('\0', 1,1);//Starting value
         expression();
@@ -32,17 +35,66 @@ public class REcompile {
         }
     }
 
+    public String changeSquareToSlash(String regex){
+        int fromIndex = 0;
+        while(regex.indexOf("[", fromIndex) != -1){
+            int startOfSub = regex.indexOf("[", fromIndex);
+            if(regex.charAt(startOfSub-1) == '\\')
+            {
+                fromIndex = startOfSub+1;
+                continue;
+            }
+            //If the [ is interpreted as a literal, skip it
+            int endOfSub = -1;
+            for(int i = startOfSub+2; i < regex.length(); i++){
+                if(regex.charAt(i) == ']'){
+                    endOfSub = i;
+                }
+            }
+            if(endOfSub == -1){
+                error();
+            }
+            char[] sub = regex.substring(startOfSub+1, endOfSub).toCharArray();
+            StringBuilder cut = new StringBuilder("(\\" + sub[0]);
+            for(int i = 1; i < sub.length; i++){
+                cut.append("|\\").append(sub[i]);//Add each char with a | and \ to make sure it is read as a literal and is OR'ed.
+            }
+            cut.append(")");
+            fromIndex = endOfSub;//Narrow the search
+            regex = regex.substring(0, startOfSub) + cut + regex.substring(endOfSub + 1);//Read formatted string back to input
+        }
+        return regex;
+    }
 
     public int expression()
     {
-        int ret = term();
+      int prevState = currstate-1;
+        int startofExpression = concatenation();
 
-        if(nextChar >= regexpattern.length || ret == -1) return -1;//Return if finished
+        if(nextChar >= regexpattern.length || startofExpression == -1) return -1;//Return if finished
 
-        if(isVocab(regexpattern[nextChar]) ||regexpattern[nextChar]=='(') expression();//Concatenate the following expression
-        return ret;//Returns the pointer to the start of this particular branch
+        if(regexpattern[nextChar] == '|'){
+            nextChar++;//Consume |
+            pointStateToCurrent(prevState);//Point previous to the branch state about to be created
+            int heldBranch = currstate;
+            addBranchState(0,0);//placeholder
+            int nextExpressionStart = expression();
+            updateState(heldBranch, '\0', startofExpression, nextExpressionStart);
+            pointStateToCurrent(heldBranch-1);//Point state just BEFORE the branch to the exitstate
+            startofExpression = heldBranch;//Branch is now the start of this expression
+        }
+        return startofExpression;//Returns the pointer to the start of this particular expression
     }
 
+    public int concatenation(){
+        int startOfConcat = term();
+
+        if(nextChar >= regexpattern.length || startOfConcat == -1) return -1;//Return if finished
+
+        if(isVocab(regexpattern[nextChar]) ||regexpattern[nextChar]=='(') concatenation();//Concatenate the following expressions
+
+        return startOfConcat;
+    }
     public int term()
     {
         //nextChar++ is used to 'consume' the operator
@@ -72,18 +124,6 @@ public class REcompile {
             addBranchState(currstate+1,currstate-1);//Add branch state, pointing to the term, and to the item past it (t1 already is pointing to this branch)
             nextChar++;
         }
-        else if(regexpattern[nextChar] == '|'){
-            pointStateToCurrent(prevState);
-            prevState=currstate-1;//Update the previous state
-            nextChar++;//Consume the | character
-            int heldState=currstate;//Save the current state for after Term is run
-            addBranchState(0,0);//place holder branch
-
-            int secondTermInDisjunction = term();//Get the location of the next term's state
-            updateState(heldState,'\0',startOfTermNumber,secondTermInDisjunction);//Create branching state at the location of the 'heldState' pointing to the two different items
-            pointStateToCurrent(prevState);
-            startOfTermNumber = heldState;//branching state of the OR is the new start of this term
-        }
         return startOfTermNumber;//Returns the factor location for the | state - used in nothing else
     }
 
@@ -112,6 +152,7 @@ public class REcompile {
             else
                 error();//Unmatched brackets
         }
+        else if(regexpattern[nextChar] == '|') return startOfFactor;
         else
             error();
         return startOfFactor;
@@ -122,17 +163,9 @@ public class REcompile {
     public boolean isVocab(char s){//Checks if the variable is a literal within the scope of the project - i.e. acceptable ascii
         if(s == '\\'){
             nextChar++;//Program will work with next value as literal
-            //Checks that the char is within the ascii of ! until ~
             return true;
         }
-        else if((int)s >= 33 && (int) s <= 126){//Checks that the char is within the ascii of ! until ~
-            //is it an operator
-            return !"*()[]?+".contains("" + s);//All special chars, '.' is not included, as it is a wildcard
-        }
-        else{
-            error();//Was an unusable char
-        }
-        return false;//Either is outside the ascii bounds OR is an unescaped special character
+        return !"*()[]?+|".contains("" + s);//All special chars, '.' is not included, as it is a wildcard
     }
 
     //
@@ -168,7 +201,7 @@ public class REcompile {
     //
     public void error(){
         System.out.println("Error occurred in the Program");
-        System.exit(1);
+//        System.exit(1);
     }
 }
 
