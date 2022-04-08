@@ -9,11 +9,15 @@ import java.util.Objects;
 //--Factor is a literal, term is something that could be part of a whole i.e. (a+b) could be a part of (a+b)/2
 //State or FSM means a labelled item in a FSM table that has 1. a state, 2. two next states - n1, n2 - points to the next index in the whole model
 public class REcompile {
-    // static State[] output;
     int currstate = 0;//State number starts at 0,
     int nextChar = 0;
+    char[] regexpattern;//Holds all the chars to be parsed/compiled
     ArrayList<State> FSMlist = new ArrayList<>();
-    char[] regexpattern;
+
+    String specialChars = "*()[]?+|";//All special chars, '.' is not included, as it is a wildcard
+    String wildcardPrintout = "__";
+    String branchStatePrintout = "";
+
     public static void main(String[] args) {
         String regex = args[0];//Reads in the regex pattern into an easily parse-able set.
         REcompile compile = new REcompile();
@@ -21,21 +25,20 @@ public class REcompile {
     }
 
     public void parse(String regex){
-        System.out.println(regex);
-        regex = changeSquareToSlash(regex);
-        System.out.println(regex);
-        regexpattern = regex.toCharArray();
-        addState('\0', 1,1);//Starting value
+        regexpattern = changeSquareToSlash(regex).toCharArray();
+
+        addState('\0', 1,1);//Starting state
         expression();
-        addState('\0',0,0);//Finishing state pointing back to start
+        if(nextChar < regexpattern.length) error();//Whole pattern was not parsed
+        addState('\0',0,0);//Finishing state pointing back to start - Can be remove or pointed to -1
 
         for (int i = 0; i < FSMlist.size(); i++){
             State state = FSMlist.get(i);
-            System.out.println(i + " " + (state.symbol == '\0' ? "~" : state.symbol) + " " + state.n1 + " " + state.n2);
+            System.out.println(i + " " + state.n1 + " " + state.n2 + " " + (state.symbol == '\0' ? (state.symbol == '.' ? wildcardPrintout : branchStatePrintout) : state.symbol));
         }
     }
 
-    public String changeSquareToSlash(String regex){
+    public String changeSquareToSlash(String regex){//replaces the [] in a regex with the (a|b|c) version
         int fromIndex = 0;
         while(regex.indexOf("[", fromIndex) != -1){
             int startOfSub = regex.indexOf("[", fromIndex);
@@ -44,14 +47,10 @@ public class REcompile {
                 fromIndex = startOfSub+1;
                 continue;
             }
-            //If the [ is interpreted as a literal, skip it
-            int endOfSub = -1;
-            for(int i = startOfSub+2; i < regex.length(); i++){
-                if(regex.charAt(i) == ']'){
-                    endOfSub = i;
-                }
-            }
-            if(endOfSub == -1){
+            //If the [ is interpreted as a literal, skip it and advance the 'search from' index
+
+            int endOfSub = regex.indexOf("]", fromIndex+2);//Start search from at least 2 past the [ to exclude the first literal (Could be a ])
+            if(endOfSub == -1 || endOfSub - startOfSub <= 1){//There must be a ] otherwise there are unmatched brackets and there must be atleast 2 characters to be valid
                 error();
             }
             char[] sub = regex.substring(startOfSub+1, endOfSub).toCharArray();
@@ -66,12 +65,15 @@ public class REcompile {
         return regex;
     }
 
+
+
+
     public int expression()
     {
       int prevState = currstate-1;
         int startofExpression = concatenation();
 
-        if(nextChar >= regexpattern.length || startofExpression == -1) return -1;//Return if finished
+        if(nextChar >= regexpattern.length) return startofExpression;//Return if finished
 
         if(regexpattern[nextChar] == '|'){
             nextChar++;//Consume |
@@ -79,8 +81,11 @@ public class REcompile {
             int heldBranch = currstate;
             addBranchState(0,0);//placeholder
             int nextExpressionStart = expression();
+            if(nextExpressionStart == -1) nextExpressionStart = currstate;
+
+            repointAllToCurrent(heldBranch, startofExpression);
             updateState(heldBranch, '\0', startofExpression, nextExpressionStart);
-            pointStateToCurrent(heldBranch-1);//Point state just BEFORE the branch to the exitstate
+            //pointStateToCurrent(heldBranch-1);//Point state just BEFORE the branch to the exitstate
             startofExpression = heldBranch;//Branch is now the start of this expression
         }
         return startofExpression;//Returns the pointer to the start of this particular expression
@@ -89,9 +94,9 @@ public class REcompile {
     public int concatenation(){
         int startOfConcat = term();
 
-        if(nextChar >= regexpattern.length || startOfConcat == -1) return -1;//Return if finished
+        if(nextChar >= regexpattern.length) return startOfConcat;//Return if finished
 
-        if(isVocab(regexpattern[nextChar]) ||regexpattern[nextChar]=='(') concatenation();//Concatenate the following expressions
+        if(!specialChars.contains("" + regexpattern[nextChar]) ||regexpattern[nextChar]=='(') concatenation();//Look ahead, without advancing any possible \
 
         return startOfConcat;
     }
@@ -99,12 +104,10 @@ public class REcompile {
     {
         //nextChar++ is used to 'consume' the operator
         //currstate++ is used to progress forward in the States table
-
-        if(nextChar >= regexpattern.length) return -1;//Return -1 if finished
         int prevState=currstate-1;
         int startOfTermNumber = factor();
 
-        if(nextChar >= regexpattern.length || startOfTermNumber == -1) return -1;
+        if(nextChar >= regexpattern.length) return startOfTermNumber;
 
         if(regexpattern[nextChar]=='*'){
             pointStateToCurrent(prevState);//repoint to branch state
@@ -130,6 +133,7 @@ public class REcompile {
     public int factor()//Consumes a literal - i.e. it can be assumed on return the nextchar is either an operator or an expression to concatenate
     {
         int startOfFactor = currstate;
+        if(nextChar >= regexpattern.length) return startOfFactor;
         if(isVocab(regexpattern[nextChar])){
             startOfFactor = currstate;
             addState(regexpattern[nextChar],currstate+1,currstate+1);
@@ -143,16 +147,6 @@ public class REcompile {
             else
                 error();
         }
-        else if(regexpattern[nextChar] == '['){
-            nextChar++;
-            //parse disjunction here - first make sure that concant and | occur in the right oder
-            if(regexpattern[nextChar] == ']'){
-                nextChar++;
-            }
-            else
-                error();//Unmatched brackets
-        }
-        else if(regexpattern[nextChar] == '|') return startOfFactor;
         else
             error();
         return startOfFactor;
@@ -165,12 +159,24 @@ public class REcompile {
             nextChar++;//Program will work with next value as literal
             return true;
         }
-        return !"*()[]?+|".contains("" + s);//All special chars, '.' is not included, as it is a wildcard
+        return !specialChars.contains("" + s);
     }
 
     //
     //----------------------STATE FUNCTIONS-----------------------
     //
+    public void repointAllToCurrent(int oldTarget, int searchStart){//Repoint all values pointing to specific state to another - does not apply to values that occur before the search start
+        for(int i = searchStart-1; i < oldTarget; i++){ //Only repoint things that have occurred before the oldstate
+            if(FSMlist.get(i).n1 == oldTarget){
+                FSMlist.get(i).n1 = currstate;
+            }
+            if(FSMlist.get(i).n2 == oldTarget){
+                FSMlist.get(i).n2 = currstate;
+            }
+        }
+
+    }
+
 
     public void pointStateToCurrent(int stateIndex){//repoint the input FSM to the current state, but does it differently based on the type of state
         if(Objects.equals(FSMlist.get(stateIndex).n1, FSMlist.get(stateIndex).n2)) {
@@ -200,8 +206,8 @@ public class REcompile {
     //---------------------ERROR FUNCTION--------------------
     //
     public void error(){
-        System.out.println("Error occurred in the Program");
-//        System.exit(1);
+        System.out.println("This regex string can NOT be parsed");
+        System.exit(1);
     }
 }
 
