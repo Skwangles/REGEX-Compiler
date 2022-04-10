@@ -34,7 +34,7 @@ public class REcompile {
 
         for (int i = 0; i < FSMlist.size(); i++){
             State state = FSMlist.get(i);
-            System.out.println(i + " " + state.n1 + " " + state.n2 + " " + (state.symbol == '\0' ? (state.symbol == '.' ? wildcardPrintout : branchStatePrintout) : state.symbol));
+            System.out.println(i + " " + state.n1 + " " + state.n2 + " " + (state.symbol == '\0' ?  branchStatePrintout : (state.symbol == '.' ? wildcardPrintout : state.symbol)));
         }
     }
 
@@ -83,7 +83,7 @@ public class REcompile {
             int nextExpressionStart = expression();
             if(nextExpressionStart == -1) nextExpressionStart = currstate;
 
-            repointAllToCurrent(heldBranch, startofExpression);
+            repointAllToCurrent(heldBranch, prevState+1);//Repoint all items pointing to held (excluding prevstate)
             updateState(heldBranch, '\0', startofExpression, nextExpressionStart);
             //pointStateToCurrent(heldBranch-1);//Point state just BEFORE the branch to the exitstate
             startofExpression = heldBranch;//Branch is now the start of this expression
@@ -111,20 +111,21 @@ public class REcompile {
 
         if(regexpattern[nextChar]=='*'){
             pointStateToCurrent(prevState);//repoint to branch state
-            addBranchState(currstate+1,startOfTermNumber);//Add branch state, pointing to the term, and to the item past it (t1 already is pointing to this branch)
+            addBranchState(startOfTermNumber, currstate+1);//Add branch state, pointing to the term, and to the item past it (t1 already is pointing to this branch)
             nextChar++;
+            startOfTermNumber = currstate-1;//Branch is now the start of the Term
         }
         else if(regexpattern[nextChar]=='?'){
             pointStateToCurrent(prevState);//point previous to the new branch state
-            addBranchState(currstate+1,startOfTermNumber);//Add branch state, pointing to the term, and to the item past it
+            addBranchState(startOfTermNumber, currstate+1);//Add branch state, pointing to the term, and to the item past it
             nextChar++;
-            pointStateToCurrent(startOfTermNumber);//Makes the 0 or 1'd literal point to the current (next open) state
+            repointAllToCurrent(currstate-1, prevState+1);//Repoint any items EXCLUDING the prevstate, to the new exit
         }
         else if(regexpattern[nextChar]=='+'){//a+ is equal to aa* - first create new literal then apply * to the new literal
+            int createdLiteralStateNum = currstate;//Location of the created Literal
             addState(FSMlist.get(startOfTermNumber).symbol, currstate +1, currstate +1 );//Creates identical literal as savedNextState
-            prevState = startOfTermNumber;
-            pointStateToCurrent(prevState);//point previous to the new branch state
-            addBranchState(currstate+1,currstate-1);//Add branch state, pointing to the term, and to the item past it (t1 already is pointing to this branch)
+            pointStateToCurrent(startOfTermNumber);//point previous literal to the new branch state
+            addBranchState(createdLiteralStateNum, currstate+1);//Add branch state, pointing to the term, and to the item past it (startOfTerm already is pointing to this branch)
             nextChar++;
         }
         return startOfTermNumber;//Returns the factor location for the | state - used in nothing else
@@ -166,7 +167,7 @@ public class REcompile {
     //----------------------STATE FUNCTIONS-----------------------
     //
     public void repointAllToCurrent(int oldTarget, int searchStart){//Repoint all values pointing to specific state to another - does not apply to values that occur before the search start
-        for(int i = searchStart-1; i < oldTarget; i++){ //Only repoint things that have occurred before the oldstate
+        for(int i = searchStart; i < oldTarget; i++){ //Only repoint things that have occurred before the oldstate
             if(FSMlist.get(i).n1 == oldTarget){
                 FSMlist.get(i).n1 = currstate;
             }
@@ -180,10 +181,10 @@ public class REcompile {
 
     public void pointStateToCurrent(int stateIndex){//repoint the input FSM to the current state, but does it differently based on the type of state
         if(Objects.equals(FSMlist.get(stateIndex).n1, FSMlist.get(stateIndex).n2)) {
-            FSMlist.get(stateIndex).n2 = currstate;
+            FSMlist.get(stateIndex).n1 = currstate;
         }
 
-        FSMlist.get(stateIndex).n1 = currstate;
+        FSMlist.get(stateIndex).n2 = currstate;
     }
 
     public void addState(char sym, int n1, int n2){
