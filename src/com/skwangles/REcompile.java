@@ -14,7 +14,7 @@ public class REcompile {
     char[] regexpattern;//Holds all the chars to be parsed/compiled
     ArrayList<State> FSMlist = new ArrayList<>();
 
-    String specialChars = "*()[]?+|";//All special chars, '.' is not included, as it is a wildcard
+    String specialChars = "*()[]?+|.";//All special chars
     String wildcardPrintout = "__";
     String branchStatePrintout = "";
 
@@ -34,40 +34,49 @@ public class REcompile {
 
         for (int i = 0; i < FSMlist.size(); i++){
             State state = FSMlist.get(i);
-            System.out.println(i + " " + state.n1 + " " + state.n2 + " " + (state.symbol == '\0' ?  branchStatePrintout : (state.symbol == '.' ? wildcardPrintout : state.symbol)));
+            System.out.println(i + " " + state.n1 + " " + state.n2 + " " + (state.symbol == '\0' ?  branchStatePrintout : (state.symbol == '\t' ? wildcardPrintout : state.symbol)));
         }
+    }
+
+    public boolean isBracketSlashed(int b, String regex){
+        int evenOrOdd = 0;
+        while(b > 0 && regex.charAt(b-1) == '\\'){
+            evenOrOdd++;
+            b--;
+        }
+        return (evenOrOdd %2 == 1 ? true : false);//If odd, there is a \ for the [, if even - all the slashes cancel each other
     }
 
     public String changeSquareToSlash(String regex){//replaces the [] in a regex with the (a|b|c) version
         int fromIndex = 0;
         while(regex.indexOf("[", fromIndex) != -1){
-            int startOfSub = regex.indexOf("[", fromIndex);
-            if(regex.charAt(startOfSub-1) == '\\')
+            int firstBracket = regex.indexOf("[", fromIndex);
+            if(isBracketSlashed(firstBracket, regex))
             {
-                fromIndex = startOfSub+1;
+                fromIndex = firstBracket+1;
                 continue;
             }
             //If the [ is interpreted as a literal, skip it and advance the 'search from' index
 
-            int endOfSub = regex.indexOf("]", fromIndex+2);//Start search from at least 2 past the [ to exclude the first literal (Could be a ])
-            if(endOfSub == -1 || endOfSub - startOfSub <= 1){//There must be a ] otherwise there are unmatched brackets and there must be atleast 2 characters to be valid
+            int closingBracket = regex.indexOf("]", fromIndex+2);//Start search from at least 2 past the [ to exclude the first literal (Could be a ])
+            if(closingBracket == -1 || closingBracket - firstBracket <= 1){//There must be a ] otherwise there are unmatched brackets and there must be atleast 2 characters to be valid
                 error();
             }
-            char[] sub = regex.substring(startOfSub+1, endOfSub).toCharArray();
-            StringBuilder cut = new StringBuilder("(\\" + sub[0]);
+            char[] sub = regex.substring(firstBracket+1, closingBracket).toCharArray();
+            StringBuilder cut = new StringBuilder("(\\" + sub[0]);//Add the first values, regardless of it if is the ] or not
             for(int i = 1; i < sub.length; i++){
                 cut.append("|\\").append(sub[i]);//Add each char with a | and \ to make sure it is read as a literal and is OR'ed.
             }
             cut.append(")");
-            fromIndex = endOfSub;//Narrow the search
-            regex = regex.substring(0, startOfSub) + cut + regex.substring(endOfSub + 1);//Read formatted string back to input
+            fromIndex = closingBracket;//Narrow the search
+            regex = regex.substring(0, firstBracket) + cut + regex.substring(closingBracket + 1);//Read formatted string back to input
         }
         return regex;
     }
 
-
-
-
+    //
+    //-----------------PARSE FUNCTIONS-----------
+    //
     public int expression()
     {
       int prevState = currstate-1;
@@ -77,12 +86,11 @@ public class REcompile {
 
         if(regexpattern[nextChar] == '|'){
             nextChar++;//Consume |
+            if(nextChar >= regexpattern.length || (!isVocab(regexpattern[nextChar]) && regexpattern[nextChar] != '.' && regexpattern[nextChar] != '(')) error(); //Make sure a full | expression is possible
             pointStateToCurrent(prevState);//Point previous to the branch state about to be created
             int heldBranch = currstate;
             addBranchState(0,0);//placeholder
             int nextExpressionStart = expression();
-            if(nextExpressionStart == -1) nextExpressionStart = currstate;
-
             repointAllToCurrent(heldBranch, prevState+1);//Repoint all items pointing to held (excluding prevstate)
             updateState(heldBranch, '\0', startofExpression, nextExpressionStart);
             //pointStateToCurrent(heldBranch-1);//Point state just BEFORE the branch to the exitstate
@@ -96,7 +104,7 @@ public class REcompile {
 
         if(nextChar >= regexpattern.length) return startOfConcat;//Return if finished
 
-        if(!specialChars.contains("" + regexpattern[nextChar]) ||regexpattern[nextChar]=='(') concatenation();//Look ahead, without advancing any possible \
+        if(!specialChars.contains("" + regexpattern[nextChar]) ||regexpattern[nextChar]=='(' || regexpattern[nextChar] == '.') concatenation();//Look ahead, without advancing any possible \
 
         return startOfConcat;
     }
@@ -148,12 +156,15 @@ public class REcompile {
             else
                 error();
         }
+        else if(regexpattern[nextChar] == '.'){
+            startOfFactor = currstate;
+            addState('\t',currstate+1,currstate+1);//Add wildcard
+            nextChar++;//Consume a factor
+        }
         else
             error();
         return startOfFactor;
     }
-
-
 
     public boolean isVocab(char s){//Checks if the variable is a literal within the scope of the project - i.e. acceptable ascii
         if(s == '\\'){
@@ -177,7 +188,6 @@ public class REcompile {
         }
 
     }
-
 
     public void pointStateToCurrent(int stateIndex){//repoint the input FSM to the current state, but does it differently based on the type of state
         if(Objects.equals(FSMlist.get(stateIndex).n1, FSMlist.get(stateIndex).n2)) {
@@ -211,10 +221,6 @@ public class REcompile {
         System.exit(1);
     }
 }
-
-
-
-// Priority - \ first, () next, * + and ?, concatenation, finally | or []
 
 //State class holds all of the individual info of the States in a FSM
 class State {

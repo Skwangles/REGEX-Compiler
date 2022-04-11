@@ -112,23 +112,56 @@ public class TestClass {
 
     }
 
+    @Test
+    public void TestBackslashedDot(){
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+        REcompile rc = new REcompile();
+        rc.parse("((\\.*)|ba)");
+        assertEquals(
+                "0 3 3 \r\n" +
+                        "1 2 2 .\r\n" +
+                        "2 1 6 \r\n" +
+                        "3 2 4 \r\n" +
+                        "4 5 5 b\r\n" +
+                        "5 6 6 a\r\n" +
+                        "6 0 0 \r\n", outContent.toString());
 
+
+    }
+
+    @Test
+    public void TestBackslashingEverything(){
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+        REcompile rc = new REcompile();
+        rc.parse("\\*\\.\\+\\?\\[\\]\\\\");
+        assertEquals(
+                "0 1 1 \r\n" +
+                        "1 2 2 *\r\n" +
+                        "2 3 3 .\r\n" +
+                        "3 4 4 +\r\n" +
+                        "4 5 5 ?\r\n" +
+                        "5 6 6 [\r\n" +
+                        "6 7 7 ]\r\n" +
+                        "7 8 8 \\\r\n" +
+                        "8 0 0 \r\n", outContent.toString());
+
+
+    }
+
+//    @Test
+//    public void TestError(){//If execution stops, this was correct
+//        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+//        System.setOut(new PrintStream(outContent));
+//        REcompile rc = new REcompile();
+//        rc.parse("a|");
+//        assertEquals(
+//                "This regex string can NOT be parsed", outContent.toString());
+//
+//    }
 }
 
 /*
-a(c[acd]*c+)?
-0,1,1,
-1,12,12,+a
-2,8,8,+c
-3,8,8,+a
-4,3,6,
-5,8,8,+c
-6,5,7,
-7,8,8,+d
-8,4,9,
-9,11,11,+c
-10,11,11,+c
-11,10,13,
-12,2,13,
-
+testing area
  */
