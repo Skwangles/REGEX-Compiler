@@ -7,7 +7,7 @@ import java.util.Objects;
 //Alexander Developed this
 
 //--Factor is a literal, term is something that could be part of a whole i.e. (a+b) is a term of (a+b)/2
-//--State or FSM means a labelled item in a FSM table that has 1. a state, 2. two next states - n1, n2 - points to the next index in the whole model
+//--State or FSM means a labelled item in an FSM table that has 1. a state, 2. two next states - n1, n2 - points to the next index in the whole model
 public class REcompile {
     int currstate = 0;//State number starts at 0,
     int nextChar = 0;
