@@ -17,6 +17,6 @@ REcompile notes:\
 -[] cannot have 0 or less items i.e. [] is not accepted\
 -[a] is accepted - i.e. is translated as (\a), i.e. another way to define a literal
 -**, ??, ++, || are not accepted\
--There is an edge case that if '\' is backslashed just before [], it will interpret it as if it were not backslashed
 -Wildcard is represented by \t before it is printed as __ in console (can change based on variable)
--
+-As per the specification empty brackets fail ()\
+-f

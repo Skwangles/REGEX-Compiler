@@ -1,6 +1,6 @@
 package com.skwangles;
 
-//Alexander Stokes - 1578409 & Rowan Thorley -
+//Alexander Stokes - 1578409 & Rowan Thorley - 1560315
 //Rowan Developed this
 
 public class REsearch {

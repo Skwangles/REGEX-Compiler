@@ -1,18 +1,17 @@
 package com.skwangles;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestClass {
 
-//    ByteArrayOutputStream outContent;
-//    private static final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
-    private static final PrintStream originalOut = System.out;
+private static final PrintStream originalOut = System.out;
     private static final PrintStream originalErr = System.err;
 
     @BeforeEach
@@ -45,7 +44,7 @@ public class TestClass {
                 "10 4 11 \r\n" +
                 "11 12 12 a\r\n" +
                 "12 13 13 b\r\n" +
-                "13 0 0 \r\n", outContent.toString());
+                "13 -1 -1 \r\n", outContent.toString());
     }
 
     @Test
@@ -67,7 +66,7 @@ public class TestClass {
                         "9 4 11 \r\n" +
                         "10 12 12 a\r\n" +
                         "11 10 12 \r\n" +
-                        "12 0 0 \r\n", outContent.toString());
+                        "12 -1 -1 \r\n", outContent.toString());
     }
 
     @Test
@@ -83,7 +82,7 @@ public class TestClass {
                         "3 2 4 \r\n" +
                         "4 5 5 b\r\n" +
                         "5 6 6 a\r\n" +
-                        "6 0 0 \r\n", outContent.toString());
+                        "6 -1 -1 \r\n", outContent.toString());
 
 
     }
@@ -108,7 +107,7 @@ public class TestClass {
                         "10 11 11 c\r\n" +
                         "11 10 13 \r\n" +
                         "12 2 13 \r\n" +
-                        "13 0 0 \r\n", outContent.toString());
+                        "13 -1 -1 \r\n", outContent.toString());
 
     }
 
@@ -125,7 +124,7 @@ public class TestClass {
                         "3 2 4 \r\n" +
                         "4 5 5 b\r\n" +
                         "5 6 6 a\r\n" +
-                        "6 0 0 \r\n", outContent.toString());
+                        "6 -1 -1 \r\n", outContent.toString());
 
 
     }
@@ -145,7 +144,7 @@ public class TestClass {
                         "5 6 6 [\r\n" +
                         "6 7 7 ]\r\n" +
                         "7 8 8 \\\r\n" +
-                        "8 0 0 \r\n", outContent.toString());
+                        "8 -1 -1 \r\n", outContent.toString());
 
 
     }

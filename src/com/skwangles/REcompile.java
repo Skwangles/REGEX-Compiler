@@ -3,18 +3,18 @@ package com.skwangles;
 import java.util.ArrayList;
 import java.util.Objects;
 
-//Alexander Stokes - 1578409 & Rowan Thorley -
+//Alexander Stokes - 1578409 & Rowan Thorley - 1560315
 //Alexander Developed this
 
-//--Factor is a literal, term is something that could be part of a whole i.e. (a+b) could be a part of (a+b)/2
-//State or FSM means a labelled item in a FSM table that has 1. a state, 2. two next states - n1, n2 - points to the next index in the whole model
+//--Factor is a literal, term is something that could be part of a whole i.e. (a+b) is a term of (a+b)/2
+//--State or FSM means a labelled item in a FSM table that has 1. a state, 2. two next states - n1, n2 - points to the next index in the whole model
 public class REcompile {
     int currstate = 0;//State number starts at 0,
     int nextChar = 0;
     char[] regexpattern;//Holds all the chars to be parsed/compiled
     ArrayList<State> FSMlist = new ArrayList<>();
 
-    String specialChars = "*()[]?+|.";//All special chars
+    String specialChars = "*()?[]+|.";//All special chars
     String wildcardPrintout = "__";
     String branchStatePrintout = "";
 
@@ -30,7 +30,7 @@ public class REcompile {
         addState('\0', 1,1);//Starting state
         expression();
         if(nextChar < regexpattern.length) error();//Whole pattern was not parsed
-        addState('\0',0,0);//Finishing state pointing back to start - Can be remove or pointed to -1
+        addState('\0',-1,-1);//Finishing state pointing back to start - Can be remove or pointed to -1
 
         for (int i = 0; i < FSMlist.size(); i++){
             State state = FSMlist.get(i);
@@ -44,7 +44,7 @@ public class REcompile {
             evenOrOdd++;
             b--;
         }
-        return (evenOrOdd %2 == 1 ? true : false);//If odd, there is a \ for the [, if even - all the slashes cancel each other
+        return evenOrOdd % 2 == 1;//If odd, there is a \ for the [, if even - all the slashes cancel each other
     }
 
     public String changeSquareToSlash(String regex){//replaces the [] in a regex with the (a|b|c) version
