@@ -15,6 +15,7 @@ public class REsearch {
     ArrayList<SearchState> FSMlist;
     String wildcardPrintout = "__";
     char wildCardChar = '\t';
+    char branchStateChar = '\0';
 
     public static void main(String[] args) {//WRITE ANY PROGRAM CODE IN THE 'searchFile' FUNCTION!!!
         REsearch res = new REsearch();
@@ -82,7 +83,6 @@ public class REsearch {
                     //Check for wildcard, otherwise add character with the 2 states
                 }
             }
-//            FSMlist.forEach(System.out::println);//-Prints the contents as a string
         }
         catch (Exception e){
             System.out.println("Error occurred in the state reading");
