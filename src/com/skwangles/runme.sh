@@ -1,7 +1,6 @@
 #!/bin/bash
 
-filename="bee_movie.txt"
-regex="abcdefg"
-
+filename="test.txt"
+regex="(j|f)"
 
 java REcompile.java $regex | java REsearch.java $filename

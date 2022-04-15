@@ -13,7 +13,10 @@ public class Deque{
     public void push(){
     }
 
-    public void enqueue(){
+    public void add(){
+    }
+
+    public void get(){
     }
 }
 
