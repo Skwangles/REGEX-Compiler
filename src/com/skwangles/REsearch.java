@@ -24,6 +24,7 @@ public class REsearch {
     char branchChar = '\0';
 
     int scan = -2;
+    int start_state = 0;
     int end_state = -1;
     int mark = 0;
     int point = 0;
@@ -53,10 +54,10 @@ public class REsearch {
         //For each starting character of the search text
         while (mark < search_text.length() && !found) {
 
-            searchQueue.addFirst(1); //Add Start state to stack
+            searchQueue.addFirst(0); //Add Start state to stack
 
             //For each possible current state
-            while (searchQueue.peek() != scan) {
+            while (searchQueue.peek() != scan & !found) {
 
                 int index = searchQueue.pop();          //Pop the top state
                 if (index == end_state) found = true;   //If its the end state, the string has been found
@@ -107,7 +108,9 @@ public class REsearch {
     }
 
     //Move the scan to the bottom
-    private void move_scan() { searchQueue.addLast(searchQueue.removeFirst()); }
+    private void move_scan() {
+        searchQueue.addLast(searchQueue.removeFirst());
+    }
 
     //--------STATE READ IN CODE---------
     public void addState(char sym, int n1, int n2) { FSMlist.add(new SearchState(sym, n1,n2)); }
