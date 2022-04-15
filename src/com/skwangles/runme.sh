@@ -1,6 +1,6 @@
 #!/bin/bash
 
 filename="test.txt"
-regex="(j|f)"
+regex="z"
 
 java REcompile.java $regex | java REsearch.java $filename

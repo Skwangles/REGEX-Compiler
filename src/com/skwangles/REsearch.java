@@ -24,12 +24,13 @@ public class REsearch {
     char branchChar = '\0';
 
     int scan = -2;
+    int end_state = -1;
     int mark = 0;
     int point = 0;
 
     public static void main(String[] args) {
         REsearch res = new REsearch();
-        res.init(args[0]); //Pass file name to function
+        res.init(args[0]); //Initialize: Read in file to search and populate FSM list
         res.search(); //Search
     }
 
@@ -37,82 +38,76 @@ public class REsearch {
         FSMlist = new ArrayList<>();
         getStates(); //Populates FSMlist with System.in
 
-        //Read File as string
-        try {
+        try { //Read in file as string
             Path filepath = Path.of(filename);
             search_text = Files.readString(filepath);
             System.out.println("Searching in: " + search_text);
         }
-        catch (java.io.IOException e) {
-            e.printStackTrace();
-        }
+        catch (java.io.IOException e) { e.printStackTrace(); }
     }
 
     public void search() {
         boolean found = false;
-        boolean end = false;
         searchQueue.add(scan); //Add scan in center of deque
 
         //For each starting character of the search text
-        while (mark < search_text.length() && !found && !end) {
+        while (mark < search_text.length() && !found) {
 
             searchQueue.addFirst(1); //Add Start state to stack
 
-            while (searchQueue.peek() != scan) {  //For everything on top of the scan
-                //System.out.println(searchQueue);
-                int index = searchQueue.pop();
-                if (index == -1) { //Final State is -1
-                    found = true;
-                    end = true;
-                }
+            //For each possible current state
+            while (searchQueue.peek() != scan) {
+
+                int index = searchQueue.pop();          //Pop the top state
+                if (index == end_state) found = true;   //If its the end state, the string has been found
+
+                //Otherwise, if the state hasn;t already been checked, see if theres any possible next states
                 else if (!visited.contains(index)) {
-                    visited.add(index);
-                    addNext(index); //Add next states for the index
+                    visited.add(index); //State has been visited
+                    addNext(index);     //Add next states for the index
                 }
             }
 
-            //Match Couldn't be found at mark, reset and increment mark
-            if (searchQueue.peekLast() == scan) {
-                //System.out.println("Moving on");
+            //No possible next states, reset and increment mark
+            if (searchQueue.peekLast() == scan && !found) {
                 visited.clear();
                 point = 0;
                 mark++;
             }
             //Otherwise there is a possible next state
-            //Move the next states to current states & increase point
+            //Make the next states the possible current states & increase point
             else {
-                //System.out.println("Possible next!");
                 move_scan();
                 point++;
             }
         }
 
         //Reached end of search
-        if (end && !found) {
-            end = true;
-            System.out.println("Reached end of input");
+        if (found)  {
+            System.out.println("Found a match '" + search_text.substring(mark, mark + point - 1) + "' at " + mark);
         }
-        else if (found) {
-            System.out.println("Found match at: " + mark);
+        else {
+            System.out.println("Reached end of input :/");
         }
     }
 
     private void addNext(int index) {
-        //If the symbol at index is the symbol required at the mark
-        System.out.println("COMPARE: " + search_text.charAt(mark + point) + " " + FSMlist.get(index).symbol);
-        if (search_text.charAt(mark + point) == FSMlist.get(index).symbol || FSMlist.get(index).symbol == branchChar) {
+
+        //If Branch state, add states as current states
+        if (FSMlist.get(index).symbol == branchChar) {
+            searchQueue.addFirst(FSMlist.get(index).n1);
+            searchQueue.addFirst(FSMlist.get(index).n2);
+        }
+        //Other wise if the correct symbol or wildcard is found add as next states
+        if (search_text.charAt(mark + point) == FSMlist.get(index).symbol || FSMlist.get(index).symbol == wildCardChar) {
             searchQueue.addLast(FSMlist.get(index).n1);
             searchQueue.addLast(FSMlist.get(index).n2);
-            //if (!FSMlist.get(index).nextEqual()) searchQueue.addLast(FSMlist.get(index).n2); //Add the second possible state if its different
         }
 
-        System.out.println(searchQueue);
     }
 
-    private void move_scan() { //Move the scan to the bottom
-        searchQueue.addLast(searchQueue.removeFirst());
-        System.out.println(searchQueue);
-    }
+    //Move the scan to the bottom
+    private void move_scan() { searchQueue.addLast(searchQueue.removeFirst()); }
 
     //--------STATE READ IN CODE---------
     public void addState(char sym, int n1, int n2) { FSMlist.add(new SearchState(sym, n1,n2)); }
@@ -132,7 +127,9 @@ public class REsearch {
                 else addState((Objects.equals(newState[3], wildcardPrintout) ? wildCardChar : newState[3].toCharArray()[0]), Integer.parseInt(newState[1]), Integer.parseInt(newState[2]));
 
             }
+            System.out.println("FSM: Branch (B), Wildcard (W)");
             FSMlist.forEach(System.out::println);   //Prints the contents as a string
+            System.out.println("");
         }
 
         catch (Exception e) {
@@ -144,8 +141,7 @@ public class REsearch {
 
 }
 
-//State class holds all of the individual info of the States in a FSM
-class SearchState {
+class SearchState { //State class holds all of the individual info of the States in the FSM
     char symbol;
     int n1;
     int n2;
@@ -157,12 +153,5 @@ class SearchState {
         this.n2 = n2;
     }
 
-    public boolean nextEqual() {
-        return n1 == n2;
-    }
-
-    public String toString() {
-        //return "[" + symbol + ", " + n1 + ", " + n2 + "]";
-        return "[" + (symbol == '\0' ? "BRANCH" : (symbol == '\t' ? "WILDCARD" : symbol)) + ", " + n1 + ", " + n2 + "]";
-    }
+    public String toString() { return "[" + (symbol == '\0' ? "B" : (symbol == '\t' ? "W" : symbol)) + ", " + n1 + ", " + n2 + "]"; }
 }
