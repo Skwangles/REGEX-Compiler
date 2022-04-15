@@ -16,6 +16,7 @@ import java.util.ArrayDeque;
 public class REsearch {
     ArrayList<SearchState> FSMlist;
     ArrayList<Integer> visited = new ArrayList<Integer>();
+    ArrayList<Occurence> occurences = new ArrayList<Occurence>();
     Deque<Integer> searchQueue = new ArrayDeque<>();
 
     String wildcardPrintout = "__";
@@ -29,8 +30,12 @@ public class REsearch {
     int mark = 0;
     int point = 0;
 
+    boolean find_all;
+
     public static void main(String[] args) {
         REsearch res = new REsearch();
+        res.find_all = Boolean.parseBoolean(args[1]);
+        System.out.println(res.find_all);
         res.init(args[0]); //Initialize: Read in file to search and populate FSM list
         res.search(); //Search
     }
@@ -60,9 +65,12 @@ public class REsearch {
             while (searchQueue.peek() != scan & !found) {
 
                 int index = searchQueue.pop();          //Pop the top state
-                if (index == end_state) found = true;   //If its the end state, the string has been found
+                if (index == end_state) {
+                    occurences.add(new Occurence(mark, point));
+                    if (!find_all) found = true;
+                }
 
-                //Otherwise, if the state hasn;t already been checked, see if theres any possible next states
+                //Otherwise, if the state hasn't already been checked, see if theres any possible next states
                 else if (!visited.contains(index)) {
                     visited.add(index); //State has been visited
                     addNext(index);     //Add next states for the index
@@ -84,12 +92,8 @@ public class REsearch {
         }
 
         //Reached end of search
-        if (found)  {
-            System.out.println("Found a match '" + search_text.substring(mark, mark + point - 1) + "' at " + mark);
-        }
-        else {
-            System.out.println("Reached end of input :/");
-        }
+        if (occurences.size() > 0) occurences.forEach(System.out::println);
+        if (find_all) System.out.println("Reached end of input, Found " + occurences.size() + " matches");
     }
 
     private void addNext(int index) {
@@ -97,12 +101,17 @@ public class REsearch {
         //If Branch state, add states as current states
         if (FSMlist.get(index).symbol == branchChar) {
             searchQueue.addFirst(FSMlist.get(index).n1);
-            searchQueue.addFirst(FSMlist.get(index).n2);
+            if (!FSMlist.get(index).nextEqual()) searchQueue.addFirst(FSMlist.get(index).n2);
         }
-        //Other wise if the correct symbol or wildcard is found add as next states
-        if (search_text.charAt(mark + point) == FSMlist.get(index).symbol || FSMlist.get(index).symbol == wildCardChar) {
-            searchQueue.addLast(FSMlist.get(index).n1);
-            searchQueue.addLast(FSMlist.get(index).n2);
+        try {
+            //Other wise if the correct symbol or wildcard is found add as next states
+            if (search_text.charAt(mark + point) == FSMlist.get(index).symbol || FSMlist.get(index).symbol == wildCardChar) {
+                searchQueue.addLast(FSMlist.get(index).n1);
+                if (!FSMlist.get(index).nextEqual()) searchQueue.addLast(FSMlist.get(index).n2);
+            }
+        }
+        catch (java.lang.StringIndexOutOfBoundsException e) {
+            //Pointer went out of bounds
         }
 
     }
@@ -142,6 +151,18 @@ public class REsearch {
 
     }
 
+    class Occurence {
+        int mark;
+        int point;
+
+        public Occurence(int mark, int point) {
+            this.mark = mark;
+            this.point = point;
+        }
+
+        public String toString() { return "Found a match '" + search_text.substring(mark, mark + point) + "' at " + mark; }
+
+    }
 }
 
 class SearchState { //State class holds all of the individual info of the States in the FSM
@@ -155,6 +176,8 @@ class SearchState { //State class holds all of the individual info of the States
         this.n1 = n1;
         this.n2 = n2;
     }
+
+    public boolean nextEqual() { return n1 == n2; }
 
     public String toString() { return "[" + (symbol == '\0' ? "B" : (symbol == '\t' ? "W" : symbol)) + ", " + n1 + ", " + n2 + "]"; }
 }
