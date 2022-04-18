@@ -77,8 +77,8 @@ public class REsearch {
         mark = 0;
         point = 0;
         searchQueue.clear();
-        searchQueue.addFirst(scan); //Add scan to deque
-        searchQueue.addFirst(0);    //Add Start state to stack
+        searchQueue.addFirst(scan);   //Add scan to deque
+        searchQueue.addFirst(0); //Add Start state to stack
 
         //For each starting character of the search text
         while (mark < search_text.length() && !found) {
