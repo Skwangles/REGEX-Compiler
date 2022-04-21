@@ -4,23 +4,25 @@ package com.skwangles;
 //Rowan Developed this
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.ArrayDeque;
 
 public class REsearch {
-    ArrayList<SearchState> FSMlist = new ArrayList<>();
-    ArrayList<Integer> visited = new ArrayList<>();
+    ArrayList<SearchState> FSMlist = new ArrayList<SearchState>();
+    ArrayList<Integer> visited = new ArrayList<Integer>();
     //ArrayDeque<Integer> searchQueue = new ArrayDeque<>();
     Deque searchQueue = new Deque();
 
     String search_text;
     String wildcardPrintout = "__";
-    String spacePrintout = "--";
     char wildCardChar = '\t';
     char branchChar = '\0';
 
     int scan = -2;
+    int start_state = 0;
     int end_state = -1;
     int mark, point, line;
 
@@ -36,30 +38,33 @@ public class REsearch {
             if (arg.charAt(0) == '-') {
                 for (int i = 1; i < arg.length(); i++) {
                     switch (arg.charAt(i)) {
-                        case 'a' -> res.find_all = true;
-                        case 'd' -> res.debug = true;
-                        default -> System.out.println("Unknown Argument: " + arg.charAt(i));
+                        case 'a':
+                            res.find_all = true;
+                            break;
+                        case 'd':
+                            res.debug = true;
+                            break;
+                        default:
+                            System.out.println("Unknown Argument: " + arg.charAt(i));
                     }
                 }
             }
             else filename = arg;
         }
 
-        ArrayList<String> fileLines = new ArrayList<>();
-        if (!filename.equals("")) {
+        if (filename != "") {
             try { //Read in file lines to array
                 Scanner scanner = new Scanner(new File(filename));
-                while (scanner.hasNextLine()) {
-                    fileLines.add(scanner.nextLine());
-                }
 
                 res.getStates(); //Populates FSMlist with System.in;
 
-                for (int i = 0; i < fileLines.size(); i++){
+                while (scanner.hasNextLine()) {
                     res.search_text = fileLines.get(i);
                     res.line = i;
                     res.search();
                 }
+
+                scanner.close();
             }
             catch (Exception e) { e.printStackTrace(); }
         }
@@ -96,7 +101,7 @@ public class REsearch {
             //If we've got to the final state and theres no next states
             else if (index == end_state) {
                 if (debug) System.out.println("Found a match '" + search_text.substring(mark, mark + point) +
-                        "' on line " + line + ", '" + search_text + "' at index " + mark + " to " + (mark + point));
+                        "' on line " + line + ", " + search_text + " at index " + mark + " to " + (mark + point));
                 else System.out.println(search_text);
                 if (!find_all) found = true;
             }
@@ -123,7 +128,7 @@ public class REsearch {
                     if (!FSMlist.get(index).nextEqual()) searchQueue.addLast(FSMlist.get(index).n2);
                 }
             }
-            catch (java.lang.StringIndexOutOfBoundsException ignored) { } //Pointer went out of bounds
+            catch (java.lang.StringIndexOutOfBoundsException e) { } //Pointer went out of bounds
         }
     }
 
@@ -146,9 +151,9 @@ public class REsearch {
             }
 
             if (debug) {
-                System.out.println("FSM: Branch (-B-), Wildcard (-W-)");
+                System.out.println("FSM: Branch (B), Wildcard (W)");
                 FSMlist.forEach(System.out::println);   //Prints the contents as a string
-                System.out.println();
+                System.out.println("");
             }
         }
 
@@ -173,7 +178,7 @@ class SearchState { //State class holds all of the individual info of the States
     }
 
     public boolean nextEqual() { return n1 == n2; }
-    public String toString() { return "[" + (symbol == '\0' ? "-B-" : (symbol == '\t' ? "-W-" : symbol)) + ", " + n1 + ", " + n2 + "]"; }
+    public String toString() { return "[" + (symbol == '\0' ? "B" : (symbol == '\t' ? "W" : symbol)) + ", " + n1 + ", " + n2 + "]"; }
 }
 
 //Basically just a linked list with all the operations
@@ -199,7 +204,7 @@ class Node
         newNode.prev = newNode.next = null;
         return newNode;
     }
-}
+};
 
 class Deque {
     Node top;
