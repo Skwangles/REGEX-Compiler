@@ -58,9 +58,10 @@ public class REsearch {
 
                 res.getStates(); //Populates FSMlist with System.in;
 
+                res.line = 0;
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine();
-                    res.line = line;
+                    res.line++;
                     res.search();
                 }
 
