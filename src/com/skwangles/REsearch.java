@@ -60,7 +60,7 @@ public class REsearch {
 
                 res.line = 0;
                 while (scanner.hasNextLine()) {
-                    String line = scanner.nextLine();
+                    res.search_text = scanner.nextLine();
                     res.line++;
                     res.search();
                 }
