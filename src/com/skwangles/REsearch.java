@@ -103,7 +103,7 @@ public class REsearch {
             //If we've got to the final state and theres no next states
             else if (index == end_state) {
                 if (debug) System.out.println("Found a match '" + search_text.substring(mark, mark + point) +
-                        "' on line " + line + ", " + search_text + " at index " + mark + " to " + (mark + point));
+                        "' on line " + line + ", '" + search_text + "' at index " + mark + " to " + (mark + point));
                 else System.out.println(search_text);
                 if (!find_all) found = true;
             }
@@ -153,7 +153,7 @@ public class REsearch {
             }
 
             if (debug) {
-                System.out.println("FSM: Branch (B), Wildcard (W)");
+                System.out.println("FSM: Branch (-B-), Wildcard (-W-)");
                 FSMlist.forEach(System.out::println);   //Prints the contents as a string
                 System.out.println("");
             }
@@ -180,7 +180,7 @@ class SearchState { //State class holds all of the individual info of the States
     }
 
     public boolean nextEqual() { return n1 == n2; }
-    public String toString() { return "[" + (symbol == '\0' ? "B" : (symbol == '\t' ? "W" : symbol)) + ", " + n1 + ", " + n2 + "]"; }
+    public String toString() { return "[" + (symbol == '\0' ? "-B-" : (symbol == '\t' ? "-W-" : symbol)) + ", " + n1 + ", " + n2 + "]"; }
 }
 
 //Basically just a linked list with all the operations
