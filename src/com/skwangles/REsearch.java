@@ -16,6 +16,7 @@ public class REsearch {
 
     String search_text;
     String wildcardPrintout = "__";
+    String spacePrintout = "--";
     char wildCardChar = '\t';
     char branchChar = '\0';
 
