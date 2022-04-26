@@ -152,7 +152,7 @@ public class REcompile {
         else if(regexpattern[nextChar]=='('){
             nextChar++;//Consume bracket
             startOfFactor = expression();//Process the internals of the ()
-            if(regexpattern[nextChar]==')')//If the very next char is NOT a close bracket, then the parsing fails
+            if(nextChar < regexpattern.length && regexpattern[nextChar]==')')//If the very next char is NOT a close bracket, then the parsing fails
                 nextChar++;//Consume the ')'
             else
                 error();
@@ -218,7 +218,7 @@ public class REcompile {
     //---------------------ERROR FUNCTION--------------------
     //
     public void error(){
-        System.out.println("This regex string can NOT be parsed");
+        System.err.println("This regex string can NOT be parsed");
         System.exit(1);
     }
 }
