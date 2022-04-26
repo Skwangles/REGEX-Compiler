@@ -15,9 +15,9 @@ public class REcompile {
     ArrayList<State> FSMlist = new ArrayList<>();
 
     String specialChars = "*()?[]+|.";//All special chars
-    String wildcardPrintout = "__";
+    String wildcardPrintout = "__";//These chars are what are printed to console to communicate each specific character
     String branchStatePrintout = "";
-    String spaceChar = "--";
+    String spaceCharPrintout = "--";
 
     public static void main(String[] args) {
         String regex = args[0];//Reads in the regex pattern into an easily parse-able set.
@@ -35,7 +35,7 @@ public class REcompile {
 
         for (int i = 0; i < FSMlist.size(); i++){
             State state = FSMlist.get(i);
-            System.out.println(i + " " + state.n1 + " " + state.n2 + " " + (state.symbol == '\0' ?  branchStatePrintout : (state.symbol == '\t' ? wildcardPrintout : (state.symbol == ' ' ? spaceChar : state.symbol))));
+            System.out.println(i + " " + state.n1 + " " + state.n2 + " " + (state.symbol == '\0' ?  branchStatePrintout : (state.symbol == '\t' ? wildcardPrintout : (state.symbol == ' ' ? spaceCharPrintout : state.symbol))));
         }
     }
 
