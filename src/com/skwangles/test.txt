@@ -1,11 +1,22 @@
 packagecom.skwangles;importjava.util.ArrayList;importjava.util.Ob
 jects;//AlexanderStokes-1578409&RowanThorley-1560315//AlexanderDev
-elopedthis//--Factorisaliteral,termissomethingthatcouldbepartofawholei.e.abisatermofab/2//--StateorFSMmeansalabellediteminanFSMtablethathas1.astate,2.twonextstates-n1,n2-pointstothenextindexinthewholemodelpublicclassREcompile{intcurrstate=0;//Statenumberstartsat0,intnextChar=0;charregexpattern;//Holdsallthecharstobeparsed/compiledArrayList<State>FSMlist=newArrayList<>;StringspecialChars=;//AllspecialcharsStringwildcardPrintoStringbranchStatePrintout=;publicstaticvoidmainStringargs{Stringregex=args0;//Readsintheregexpatternintoaneasilyparse-ableset.REcompilecompile=newREcompile;compile.parseregex;}publicvoidparseStringregex{regexpattern=changeSquareToSlashregex.toCharArray;addState'\0',1,1;//Startingstateexpression;ifnextChar<regexpattern.lengtherror;//WholepatternwasnotparsedaddState'\0',-1,-1;//Finishingstatepointingbacktostart-Canberemoveorpointedto-1
-forinti=0;i<FSMlist.size;i{Statestate=FSMlist.geti;System.out.print
+elopedthis//--Factorisaliteral,termissomethingthatcouldbepartofawholei.
+e.abisatermofab/2//--StateorFSMmeansalabellediteminanFSMtablethathas1.astate,2
+.twonextstates-n1,n2-pointstothenextindexinthewholemodelpublicclassREcompil
+e{intcurrstate=0;//Statenumberstartsat0,intnextChar=0;charregexpattern;//Hold
+sallthecharstobeparsed/compiledArrayList<State>FSMlist=newArrayList<>;Strings
+pecialChars=;//AllspecialcharsStringwildcardPrintoStringbranchStatePrintout=;
+publicstaticvoidmainStringargs{Stringregex=args0;//Readsintheregexpatterninto
+aneasilyparse-ableset.REcompilecompile=newREcompile;compile.parseregex;}public
+voidparseStringregex{regexpattern=changeSquareToSlashregex.toCharArray;addStat
+e'\0',1,1;//Startingstateexpression;ifnextChar<regexpattern.lengtherror;//Whol
+epatternwasnotparsedaddState'\0',-1,-1;//Finishingstatepointingbacktostart-Can
+beremoveorpointedto-1
+forinti=0;i<FSMlist .size;i{Statestate=FSMlist.geti;System.out.print
 lnistate.n1state.n2state.symbol=='\0'?branchStatePrintout:state.sy
 mbol=='\t'?wildcardPrintout:state.symbol;}}publicbooleanisBracketS
 lashedintb,Stringregex{intevenOrOdd=0;whileb>0&&regex.charAtb-1=='\
-\'{evenOrOdd;b--;}returnevenOrOdd%2==1;//Ifodd,thereisa\forthe,ifev
+\'{evenOrOdd;b--;}returnevenOrOdd% 2==1;//Ifodd,thereisa\forthe,ifev
 en-alltheslashescanceleachother}publicStringchangeSquareToSlashStri
 ngregex{//replacestheinaregexwiththeabcversionintfromIndex=0;whilere
 gex.indexOf,fromIndex!=-1{intfirstBracket=regex.indexOf,fromIndex;ifi
@@ -15,7 +26,7 @@ osingBracket=regex.indexOf,fromIndex2;//Startsearchfromatleast2pastthet
 oexcludethefirstliteralCouldbeaifclosingBracket==-1closingBracket-first
 Bracket<=1{//Theremustbeaotherwisethereareunmatchedbracketsandtheremustb
 eatleast2characterstobevaliderror;}fromIndex=closingBracket;//Narrowthes
-earchregex=regex.substring0,firstBracketcutregex.substringclosingBracket
+earchregex=regex.substring0,firstBracket cutregex.substringclosingBracket
 1;//Readformattedstringbacktoinput}returnregex;}////-----------------PARS
 EFUNCTIONS-----------//publicintexpression{intprevState=currstate-1;intsta
 rtofExpression=concatenation;ifnextChar>=regexpattern.lengthreturnstartofE
@@ -25,14 +36,14 @@ Char!='.'&&regexpatternnextChar!=''error;//Makesureafullexpressionispossibl
 epointStateToCurrentprevState;//Pointprevioustothebranchstateabouttobecreat
 edintheldBranch=currstate;addBranchState0,0;//placeholderintnextExpressionSt
 art=expression;repointAllToCurrentheldBranch,prevState1;//Repointallitemspoi
-ntingtoheldexcludingprevstateupdateStateheldBranch,'\0',startofExpression,ne
+ntingtoheldexcludingprevstateupdate StateheldBranch,'\0',startofExpression,ne
 xtExpressionStart;//pointStateToCurrentheldBranch-1;//PointstatejustBEFOREth
 ebranchtotheexitstatestartofExpression=heldBranch;//Branchisnowthestartofthis
 expression}returnstartofExpression;//Returnsthepointertothestartofthisparticu
 larexpression}publicintconcatenation{intstartOfConcat=term;ifnextChar>=regexp
 attern.lengthreturnstartOfConcat;//Returniffinishedif!specialChars.containsre
 gexpatternnextCharregexpatternnextChar==''regexpatternnextChar=='.'concatenat
-on;//Lookahead,withoutadvancinganypossiblereturnstartOfConcat;}publicintterm{//
+on;//Lookahead,witho utadvancinganypossiblereturnstartOfConcat;}publicintterm{//
 nextCharisusedto'consume'theoperator//currstateisusedtoprogressforwardintheSta
 testableintprevState=currstate-1;intstartOfTermNumber=factor;ifnextChar>=regexp
 attern.lengthreturnstartOfTermNumber;ifregexpatternnextChar=='*'{pointStateToCu

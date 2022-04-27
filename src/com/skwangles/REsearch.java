@@ -18,6 +18,7 @@ public class REsearch {
 
     String search_text;
     String wildcardPrintout = "__";
+    String spacePrintout = "--";
     char wildCardChar = '\t';
     char branchChar = '\0';
 
@@ -147,7 +148,7 @@ public class REsearch {
                 //If Branch State
                 if(newState.length < 4) addBranchState(Integer.parseInt(newState[1]), Integer.parseInt(newState[2]));
                 //Check for wildcard, otherwise add character with the 2 states
-                else addState((Objects.equals(newState[3], wildcardPrintout) ? wildCardChar : newState[3].toCharArray()[0]),
+                else addState((Objects.equals(newState[3], wildcardPrintout) ? wildCardChar : Objects.equals(newState[3], spacePrintout) ? ' ': newState[3].toCharArray()[0]),
                         Integer.parseInt(newState[1]), Integer.parseInt(newState[2]));
             }
 

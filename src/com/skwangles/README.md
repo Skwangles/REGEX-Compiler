@@ -8,6 +8,8 @@
 - Wildcard is represented *internally* by \t before it is printed as __ in console (can change based on variable)
 - Branch is represented *internally* by \0 before it is printed as an empty string/char
 - As per the specification empty brackets fail ()
+- A space character '\s' is printed out as '--' - Yes, we could have printed " ", but the scanner works on spaces.\
+(or empty char, but we decided to use that for branches)
 - Error calls System.exit(1) on failure and writes 'This regex can NOT be parsed' to standard out
 
 S->E\
