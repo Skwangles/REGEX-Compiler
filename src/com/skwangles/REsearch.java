@@ -1,6 +1,6 @@
 package com.skwangles;
 
-//Alexander Stokes - 1578409 & Rowan Thorley - 1560315
+//Alexander S & Rowan T
 //Rowan Developed this
 
 import java.io.File;
