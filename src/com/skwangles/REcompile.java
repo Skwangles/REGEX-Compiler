@@ -3,7 +3,7 @@ package com.skwangles;
 import java.util.ArrayList;
 import java.util.Objects;
 
-//Alexander Stokes - 1578409 & Rowan Thorley - 1560315
+//Alexander S & Rowan T
 //Alexander Developed this
 
 //--Factor is a literal, term is something that could be part of a whole i.e. (a+b) is a term of (a+b)/2
